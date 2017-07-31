@@ -1,0 +1,34 @@
+{
+    "name": "girolando/oauth2-layer",
+    "type": "library",
+    "description": "Pacote que utiliza o league/oauth2 para realizar a implementação oauth2 para o sistema puregh da empresa.",
+    "keywords": ["girolando", "oauth", "oauth2"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Anderson Silva",
+            "email": "anderson.nuneseth@gmail.com",
+            "homepage": "https://andersonsilva.info"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "psr/http-message": "~1.0",
+        "laravel/framework": "5.1.*",
+        "league/oauth2-server": "^5.1",
+        "guzzlehttp/guzzle": "^6.2",
+        "symfony/psr-http-message-bridge": "^1.0",
+        "zendframework/zend-diactoros": "^1.4"
+    },
+    "require-dev": {
+        "fzaninotto/faker": "~1.4",
+        "mockery/mockery": "0.9.*",
+        "phpunit/phpunit": "~4.0",
+        "phpspec/phpspec": "~2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Girolando\\Oauth2Layer\\": "src/"
+        }
+    }
+}
