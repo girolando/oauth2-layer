@@ -16,6 +16,7 @@ use League\OAuth2\Server\Grant\PasswordGrant;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use League\OAuth2\Server\ResourceServer;
 
 class Oauth2Provider extends ServiceProvider
 {
@@ -48,25 +49,11 @@ class Oauth2Provider extends ServiceProvider
             return new ScopeRepository();
         });
 
-        /*$this->app->bind(ServerRequest::class, function() {
-
-
-            $server = app(AuthorizationServer::class);
-
-            $server->enableGrantType(new ClientCredentialsGrant(), $intervaloPadrao);
-            $server->enableGrantType(new PasswordGrant($userRepository, $refreshTokenRepository), $intervaloPadrao);
-
-            $this->app->instance(AuthorizationServer::class, $server);
-
-            //HTTP PSR-7:
-            $normalRequest = \Illuminate\Http\Request::capture();
-            //$normalRequest = app(\Illuminate\Http\Request::class);
-
-            $requestInstance = new ServerRequest($normalRequest->getMethod(), $normalRequest->getUri(), $normalRequest->headers->all(), $normalRequest->getContent());
-            dd('cheogu aki', $normalRequest->all(), $requestInstance->getParsedBody(), $normalRequest->getContent()); //a $normalRequest tem seus dados exibidos normalmente.
-            //Já a $requestInstance, que é uma instancia da ServerRequest, mesmo eu tendo passado o getContent pro construtor dela, vem vazia.
-            return $requestInstance;
-        });*/
+        $this->app->bind(ResourceServer::class, function() {
+            $accessTokenRespository = new AccessTokenRepository();
+            $publicKey = base_path('public.key');
+            return new ResourceServer($accessTokenRespository, $publicKey);
+        });
 
         $this->app->bind(AuthorizationServer::class, function() {
 

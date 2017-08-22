@@ -20,6 +20,7 @@ use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
 class AccessTokenEntity extends ModelAdapter implements AccessTokenEntityInterface
 {
+    const JWT_ALGORYTHM = 'RS256';
 
     protected $expiryDateTime;
     protected $client;
@@ -41,7 +42,18 @@ class AccessTokenEntity extends ModelAdapter implements AccessTokenEntityInterfa
      */
     public function convertToJWT(CryptKey $privateKey)
     {
-        return $this->realEntity->hashTokenAcesso;
+        $jwt = \JWT::encode(
+            [
+                'jti'           => $this->realEntity->hashTokenAcesso,
+                'aud'           => $this->getClient()->getIdentifier(),
+                'sub'           => $this->getUserIdentifier(),
+                'scopes'        => $this->getScopes()
+            ],
+            $privateKey->getKeyPath(),
+            self::JWT_ALGORYTHM,
+            ['alg' => self::JWT_ALGORYTHM]
+        );
+        return $jwt;
     }
 
     /**

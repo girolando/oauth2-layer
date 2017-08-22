@@ -18,10 +18,19 @@ class AppCliente extends Model
         'classAppCliente',
         'descAppCliente',
     ];
+    protected $appends = [
+        'urlImagem',
+    ];
 
 
     public function EscoposDisponiveis()
     {
         return $this->belongsToMany(Escopo::class, 'api.AppClienteEscopo', 'idAppCliente', 'idEscopo');
+    }
+
+
+    public function getUrlImagemAttribute()
+    {
+
     }
 }
