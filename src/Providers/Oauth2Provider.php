@@ -68,14 +68,14 @@ class Oauth2Provider extends ServiceProvider
             $publicKey = base_path('public.key');
             $userRepository = new UserRepository();
             $refreshTokenRepository = new RefreshTokenRepository();
-            $intervaloPadrao = new \DateInterval('PT1H');
+            $intervaloPadrao = new \DateInterval('PT2H');
 
 
             $server = new AuthorizationServer($clientRepository, $accessTokenRepository, $scopeRepository, $privateKey, $publicKey);
             $server->enableGrantType(new ClientCredentialsGrant(), $intervaloPadrao);
             $server->enableGrantType(new PasswordGrant($userRepository, $refreshTokenRepository), $intervaloPadrao);
 
-            $authGrant = new AuthCodeGrant($authCodeRepository, $refreshTokenRepository, new \DateInterval('PT30M'));
+            $authGrant = new AuthCodeGrant($authCodeRepository, $refreshTokenRepository, $intervaloPadrao);
             $authGrant->setRefreshTokenTTL(new \DateInterval('P30D'));
             $server->enableGrantType($authGrant, $intervaloPadrao);
 
