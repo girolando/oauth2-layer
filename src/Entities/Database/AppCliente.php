@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AppCliente extends Model
 {
+    const PATH_IMAGES = 'Api/AppCliente/';
     protected $table = 'api.AppCliente';
     public $timestamps = false;
     public static $snakeAttributes = false;
@@ -31,6 +32,6 @@ class AppCliente extends Model
 
     public function getUrlImagemAttribute()
     {
-
+        return url() . '/storage/' . self::PATH_IMAGES . $this->classAppCliente;
     }
 }
