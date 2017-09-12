@@ -21,7 +21,7 @@ class AuthCodeEntity implements AuthCodeEntityInterface
     protected $expiryTime;
     protected $userIdentifier;
     protected $client;
-    protected $scopes;
+    protected $scopes = [];
 
     /**
      * @return string
