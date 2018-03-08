@@ -9,17 +9,22 @@
 namespace Girolando\Oauth2Layer\Exceptions;
 
 
-abstract class Oauth2LayerException extends \Exception
+use Girolando\Oauth2Layer\Contracts\PayloadExceptionContract;
+use Girolando\Oauth2Layer\Traits\PayloadExceptionTrait;
+
+abstract class Oauth2LayerException extends \Exception implements PayloadExceptionContract
 {
+    use PayloadExceptionTrait;
 
     abstract function errorType();
 
     public function __toString()
     {
-        $payload = ['status' => 'error', 'error_type' => $this->errorType(), 'message' => $this->getMessage()];
+        $payload = ['status' => 'error', 'error_type' => $this->errorType(), 'message' => $this->getMessage(), 'payload' => $this->getPayload()];
         if(env('APP_DEBUG', false)) {
             $payload['stackTrace'] = $this->getTraceAsString();
         }
+
 
         return \GuzzleHttp\json_encode($payload);
     }
