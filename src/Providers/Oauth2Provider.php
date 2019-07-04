@@ -68,7 +68,7 @@ class Oauth2Provider extends ServiceProvider
             $publicKey = base_path('public.key');
             $userRepository = new UserRepository();
             $refreshTokenRepository = new RefreshTokenRepository();
-            $intervaloPadrao = new \DateInterval('PT2H');
+            $intervaloPadrao = new \DateInterval('P12M');
 
 
             $server = new AuthorizationServer($clientRepository, $accessTokenRepository, $scopeRepository, $privateKey, $publicKey);
@@ -76,8 +76,15 @@ class Oauth2Provider extends ServiceProvider
             $server->enableGrantType(new PasswordGrant($userRepository, $refreshTokenRepository), $intervaloPadrao);
 
             $authGrant = new AuthCodeGrant($authCodeRepository, $refreshTokenRepository, $intervaloPadrao);
-            $authGrant->setRefreshTokenTTL(new \DateInterval('P30D'));
+            $authGrant->setRefreshTokenTTL(new \DateInterval('P12M'));
+            
+            
+            $refreshGrant = new \League\OAuth2\Server\Grant\RefreshTokenGrant($refreshTokenRepository);
+            $refreshGrant->setRefreshTokenTTL(new \DateInterval('P12M'));
+
             $server->enableGrantType($authGrant, $intervaloPadrao);
+            $server->enableGrantType($refreshGrant, $intervaloPadrao);
+
 
 
             return $server;
