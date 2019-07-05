@@ -3,103 +3,93 @@
  * Created by PhpStorm.
  * User: andersonnunes
  * Date: 05/06/17
- * Time: 14:17
+ * Time: 16:23
  */
 
 namespace Girolando\Oauth2Layer\Repositories;
 
 
-use Girolando\Oauth2Layer\Abstracts\ModelAdapter;
-use \Girolando\Oauth2Layer\Entities\AccessTokenEntity;
+use Girolando\Oauth2Layer\Entities\Database\RefreshTokenAcesso;
 use Girolando\Oauth2Layer\Entities\Database\TokenAcesso;
-use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
+use Girolando\Oauth2Layer\Entities\RefreshTokenEntity;
+use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
+use League\OAuth2\Server\CryptTrait;
+use League\OAuth2\Server\CryptKey;
+use League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
 
-class AccessTokenRepository implements AccessTokenRepositoryInterface
+class RefreshTokenRepository implements RefreshTokenRepositoryInterface
 {
-
+    use CryptTrait;
     /**
-     * Create a new access token
+     * Creates a new refresh token
      *
-     * @param ClientEntityInterface $clientEntity
-     * @param ScopeEntityInterface[] $scopes
-     * @param mixed $userIdentifier
-     *
-     * @return AccessTokenEntityInterface
+     * @return RefreshTokenEntityInterface
      */
-    public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, $userIdentifier = null)
+    public function getNewRefreshToken()
     {
-        $accessTokenEntity = new AccessTokenEntity();
-        $accessTokenEntity->setClient($clientEntity);
-        foreach($scopes as $scope) $accessTokenEntity->addScope($scope);
-        if($userIdentifier) {
-            $accessTokenEntity->setUserIdentifier($userIdentifier);
-        }
-        return $accessTokenEntity;
+        return new RefreshTokenEntity();
     }
 
     /**
-     * Persists a new access token to permanent storage.
+     * Create a new refresh token_name.
      *
-     * @param AccessTokenEntityInterface $accessTokenEntity
+     * @param RefreshTokenEntityInterface $refreshTokenEntity
      */
-    public function persistNewAccessToken(AccessTokenEntityInterface $accessTokenEntity)
+    public function persistNewRefreshToken(RefreshTokenEntityInterface $refreshTokenEntity)
     {
-        $tokensAntigos = (new TokenAcesso())
+        $tokenAcesso = (new TokenAcesso())
             ->newQuery()
-            ->where('codigoPessoa','=', $accessTokenEntity->getUserIdentifier())
-            ->where('idAppCliente','=', $accessTokenEntity->getClient()->getIdentifier())
-            ->where('expiracaoTokenAcesso','=', 0)
-            ->get();
-        foreach($tokensAntigos as $tokenAntigo) {
-            $tokenAntigo->consumidoTokenAcesso = 1;
-            $tokenAntigo->save();
-        }
-        $tokenAcesso = new TokenAcesso();
-        $tokenAcesso->hashTokenAcesso = $accessTokenEntity->getIdentifier();
-        $tokenAcesso->codigoPessoa = $accessTokenEntity->getUserIdentifier();
-        $tokenAcesso->idAppCliente = $accessTokenEntity->getClient()->getRealEntity()->id;
-        $tokenAcesso->consumidoTokenAcesso = 0;
-        $tokenAcesso->expiracaoTokenAcesso = $accessTokenEntity->getExpiryDateTime()->format('Y-m-d H:i:s');
-        $tokenAcesso->save();
+            ->where('hashTokenAcesso', 'like', $refreshTokenEntity->getAccessToken()->getIdentifier())
+            ->first();
 
-        return $accessTokenEntity;
+
+        
+
+        $refresh = RefreshTokenAcesso::create([
+            'idTokenAcesso'                     => $tokenAcesso->id,
+            'hashRefreshTokenAcesso'            => $refreshTokenEntity->getIdentifier(),
+            'expiracaoRefreshTokenAcesso'       => $refreshTokenEntity->getExpiryDateTime()->format('Y-m-d H:i:s'),
+        ]);
+        $json = json_encode([
+            'client_id'             => $refreshTokenEntity->getAccessToken()->getClient()->getIdentifier(),
+            'expiry_time'           => $refreshTokenEntity->getExpiryDateTime()->format('Y-m-d H:i:s'),
+            'refresh_token_id'      => $refresh->id
+        ]);
+        $this->setPrivateKey(new CryptKey(base_path('private.key')));
+        $this->setPublicKey(new CryptKey(base_path('public.key')));
+        $hash = $this->encrypt($json);
+        
+        $refresh->update(['hashRefreshTokenAcesso' => $hash]);
+        return $refreshTokenEntity;
     }
 
     /**
-     * Revoke an access token.
+     * Revoke the refresh token.
      *
      * @param string $tokenId
      */
-    public function revokeAccessToken($tokenId)
+    public function revokeRefreshToken($tokenId)
     {
-        $token = $this->getTokenByHash($tokenId);
-        if(!$token) return;
-
-        $token->consumidoTokenAcesso = 1;
-        $token->save();
+        $refreshToken = $this->getTokenByHash($tokenId);
+        if(!$refreshToken) return;
+        $refreshToken->expiracaoRefreshTokenAcesso = (new \DateTime())->sub(new \DateInterval('PT1M'))->format('Y-m-d H:i:s');
+        $refreshToken->save();
     }
 
     /**
-     * Check if the access token has been revoked.
+     * Check if the refresh token has been revoked.
      *
      * @param string $tokenId
      *
      * @return bool Return true if this token has been revoked
      */
-    public function isAccessTokenRevoked($tokenId)
+    public function isRefreshTokenRevoked($tokenId)
     {
-        $token = $this->getTokenByHash($tokenId);
-        $hj = new \DateTime();
-        if(!$token || $token->consumidoTokenAcesso == 1) return true;
         return false;
     }
 
-
     private function getTokenByHash($hash)
     {
-        return (new TokenAcesso())->newQuery()->where('hashTokenAcesso','like', $hash)->first();
+        return (new RefreshTokenAcesso())->newQuery()->where('hashRefreshTokenAcesso','like', $hash)->first();
     }
 }
